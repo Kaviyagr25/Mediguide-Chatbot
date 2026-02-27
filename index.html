@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MediGuide — Healthcare Assistant</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
+ <style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f2ec;
+    --surface: #ffffff;
+    --surface2: #f0ede6;
+    --border: #e2ddd4;
+    --text: #1a1714;
+    --text-muted: #7a7268;
+    --accent: #2d6a4f;
+    --accent-light: #d8f3dc;
+    --accent2: #b7465a;
+    --accent2-light: #fde8ec;
+    --warn: #c77c2a;
+    --warn-light: #fef3e2;
+    --shadow: 0 2px 12px rgba(0,0,0,0.07);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.10);
+    --radius: 16px;
+    --radius-sm: 8px;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* ── Layout ── */
+  .app {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    grid-template-rows: 100vh;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    background: var(--text);
+    color: white;
+    display: flex;
+    flex-direction: column;
+    padding: 32px 24px;
+    overflow-y: auto;
+    border-right: 1px solid #2d2925;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 36px;
+  }
+
+  .logo-icon {
+    width: 44px;
+    height: 44px;
+    background: var(--accent);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .logo-text {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.5rem;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+  .logo-text span {
+    display: block;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 300;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    opacity: 0.5;
+    margin-top: 2px;
+  }
+
+  .sidebar-section {
+    margin-bottom: 28px;
+  }
+  .sidebar-label {
+    font-size: 0.68rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    opacity: 0.4;
+    margin-bottom: 12px;
+  }
+
+  .scope-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 0.82rem;
+    opacity: 0.75;
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+  .scope-item .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    flex-shrink: 0;
+    margin-top: 6px;
+  }
+  .scope-item.out .dot { background: var(--accent2); }
+
+  .temp-control {
+    margin-top: 4px;
+  }
+  .temp-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 0.82rem;
+    opacity: 0.75;
+  }
+  #temp-val {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1rem;
+    opacity: 1;
+    color: var(--accent);
+  }
+  input[type=range] {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 4px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 4px;
+    outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+  }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding-top: 24px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .reset-btn {
+    width: 100%;
+    padding: 10px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: var(--radius-sm);
+    color: white;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: background 0.2s;
+  }
+  .reset-btn:hover { background: rgba(255,255,255,0.12); }
+
+  /* ── Main Panel ── */
+  .main {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .topbar {
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .topbar h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.25rem;
+    font-weight: 400;
+    color: var(--text);
+  }
+  .topbar p {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+  .status-badge {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 999px;
+    letter-spacing: 0.04em;
+  }
+  .status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* ── Chat Area ── */
+  .chat-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 28px 32px;
+    scroll-behavior: smooth;
+  }
+  .chat-area::-webkit-scrollbar { width: 6px; }
+  .chat-area::-webkit-scrollbar-track { background: transparent; }
+  .chat-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .welcome {
+    text-align: center;
+    padding: 48px 20px;
+    animation: fadeUp 0.5s ease both;
+  }
+  .welcome-icon {
+    font-size: 3.5rem;
+    margin-bottom: 16px;
+  }
+  .welcome h2 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+  .welcome p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    max-width: 420px;
+    margin: 0 auto 32px;
+  }
+  .sample-queries {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .sample-q {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 8px 18px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .sample-q:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-light);
+    transform: translateY(-1px);
+  }
+
+  /* ── Message Bubbles ── */
+  .message {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 24px;
+    animation: fadeUp 0.3s ease both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .msg-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    flex-shrink: 0;
+  }
+  .user-msg .msg-avatar { background: var(--surface2); order: 2; }
+  .assistant-msg .msg-avatar { background: var(--accent); }
+
+  .user-msg { flex-direction: row-reverse; }
+  .user-msg .msg-body { align-items: flex-end; }
+
+  .msg-body { display: flex; flex-direction: column; gap: 4px; max-width: 75%; }
+  .msg-name { font-size: 0.72rem; font-weight: 500; letter-spacing: 0.05em; color: var(--text-muted); text-transform: uppercase; }
+
+  .msg-bubble {
+    padding: 14px 18px;
+    border-radius: 16px;
+    font-size: 0.9rem;
+    line-height: 1.65;
+  }
+  .user-msg .msg-bubble {
+    background: var(--text);
+    color: white;
+    border-bottom-right-radius: 4px;
+  }
+  .assistant-msg .msg-bubble {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 4px;
+    box-shadow: var(--shadow);
+  }
+
+  /* Markdown-like formatting inside bubbles */
+  .msg-bubble strong { font-weight: 600; }
+  .msg-bubble .section-header {
+    display: block;
+    font-weight: 600;
+    margin: 12px 0 6px;
+    color: var(--accent);
+    font-size: 0.88rem;
+  }
+  .msg-bubble .section-header:first-child { margin-top: 0; }
+  .msg-bubble ul { padding-left: 18px; margin: 6px 0; }
+  .msg-bubble li { margin-bottom: 4px; }
+  .msg-bubble .disclaimer {
+    margin-top: 14px;
+    padding: 10px 14px;
+    background: var(--warn-light);
+    border-left: 3px solid var(--warn);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: 0.79rem;
+    font-style: italic;
+    color: #7a5a1a;
+    line-height: 1.5;
+  }
+  .msg-bubble .out-of-scope {
+    padding: 12px 14px;
+    background: var(--accent2-light);
+    border-left: 3px solid var(--accent2);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: 0.85rem;
+    color: #8a2a3a;
+  }
+  .msg-bubble hr { border: none; border-top: 1px solid var(--border); margin: 12px 0; }
+
+  /* Typing indicator */
+  .typing-indicator {
+    display: flex;
+    gap: 5px;
+    padding: 16px 18px;
+    align-items: center;
+  }
+  .typing-indicator span {
+    width: 8px;
+    height: 8px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    animation: bounce 1.2s ease-in-out infinite;
+    opacity: 0.4;
+  }
+  .typing-indicator span:nth-child(1) { animation-delay: 0s; }
+  .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce {
+    0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+    40% { transform: translateY(-6px); opacity: 1; }
+  }
+
+  /* ── Input Area ── */
+  .input-area {
+    padding: 20px 32px 28px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+  .input-wrap {
+    display: flex;
+    gap: 12px;
+    align-items: flex-end;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .input-wrap:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(45,106,79,0.12);
+  }
+  textarea {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    color: var(--text);
+    resize: none;
+    outline: none;
+    line-height: 1.6;
+    max-height: 120px;
+    min-height: 24px;
+  }
+  textarea::placeholder { color: var(--text-muted); }
+  .send-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: var(--accent);
+    border: none;
+    cursor: pointer;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+  .send-btn:hover { background: #245a40; transform: scale(1.05); }
+  .send-btn:disabled { background: var(--border); cursor: not-allowed; transform: none; }
+  .send-btn svg { width: 17px; height: 17px; }
+  .input-hint {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 8px;
+    text-align: center;
+  }
+</style> 
+</head>
+<body>
+<div class="app">
+
+  <!-- ── Sidebar ── -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-icon">⚕</div>
+      <div class="logo-text">
+        MediGuide
+        <span>Healthcare Assistant</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Domain Scope</div>
+      <div class="scope-item"><div class="dot"></div>Symptoms & Conditions</div>
+      <div class="scope-item"><div class="dot"></div>Medications & Drug Classes</div>
+      <div class="scope-item"><div class="dot"></div>Preventive Health & Wellness</div>
+      <div class="scope-item"><div class="dot"></div>First Aid Guidance</div>
+      <div class="scope-item"><div class="dot"></div>Mental Health Awareness</div>
+      <div class="scope-item"><div class="dot"></div>Nutrition & Lifestyle</div>
+      <div class="scope-item"><div class="dot"></div>Medical Tests (General)</div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Out of Scope</div>
+      <div class="scope-item out"><div class="dot"></div>Personal diagnoses</div>
+      <div class="scope-item out"><div class="dot"></div>Prescription dosages</div>
+      <div class="scope-item out"><div class="dot"></div>Non-health topics</div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Temperature</div>
+      <div class="temp-control">
+        <div class="temp-row">
+          <span>Precision ←→ Creative</span>
+          <span id="temp-val">0.3</span>
+        </div>
+        <input type="range" id="temp-slider" min="0" max="1" step="0.1" value="0.3" />
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-label" style="margin-bottom:10px">Powered By</div>
+      <div style="font-size:0.78rem;opacity:0.5;margin-bottom:18px">OpenRouter API · LangChain · GPT-3.5-Turbo</div>
+      <button class="reset-btn" id="reset-btn">↺ Clear Conversation</button>
+    </div>
+  </aside>
+
+  <!-- ── Main Panel ── -->
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1>Healthcare Information Assistant</h1>
+        <p>Ask about symptoms, conditions, medications, and general wellness.</p>
+      </div>
+      <div class="status-badge">
+        <div class="status-dot"></div>
+        Active
+      </div>
+    </div>
+
+    <div class="chat-area" id="chat-area">
+      <div class="welcome" id="welcome-screen">
+        <div class="welcome-icon">🩺</div>
+        <h2>Hello, I'm MediGuide</h2>
+        <p>Your evidence-based healthcare information assistant. Ask me about symptoms, conditions, medications, or general wellness guidance.</p>
+        <div class="sample-queries">
+          <div class="sample-q" onclick="useQuery(this)">Signs of type 2 diabetes</div>
+          <div class="sample-q" onclick="useQuery(this)">How does ibuprofen work?</div>
+          <div class="sample-q" onclick="useQuery(this)">Early signs of a heart attack</div>
+          <div class="sample-q" onclick="useQuery(this)">What is hypertension?</div>
+          <div class="sample-q" onclick="useQuery(this)">Improving sleep naturally</div>
+          <div class="sample-q" onclick="useQuery(this)">First aid for a burn</div>
+          <div class="sample-q" onclick="useQuery(this)">What does a CBC test measure?</div>
+          <div class="sample-q" onclick="useQuery(this)">Exercise and mental health</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="input-area">
+      <div class="input-wrap">
+        <textarea
+          id="query-input"
+          rows="1"
+          placeholder="Ask a healthcare question…"
+          maxlength="500"
+        ></textarea>
+        <button class="send-btn" id="send-btn" onclick="sendMessage()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13"></line>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+          </svg>
+        </button>
+      </div>
+      <div class="input-hint">Press Enter to send · Shift+Enter for new line · For emergencies, call 112 / 911</div>
+    </div>
+  </main>
+</div>
+
+<script>
+  // ── Config ──
+  const API_URL = "http://localhost:5000/chat";  // Flask backend
+  const DEMO_MODE = true; // Set false to use real API
+
+  // ── State ──
+  let messages = [];
+  let isLoading = false;
+  let temperature = 0.3;
+
+  // ── Temperature Slider ──
+  const slider = document.getElementById("temp-slider");
+  const tempVal = document.getElementById("temp-val");
+  slider.addEventListener("input", () => {
+    temperature = parseFloat(slider.value);
+    tempVal.textContent = temperature.toFixed(1);
+  });
+
+  // ── Auto-resize textarea ──
+  const textarea = document.getElementById("query-input");
+  textarea.addEventListener("input", () => {
+    textarea.style.height = "auto";
+    textarea.style.height = Math.min(textarea.scrollHeight, 120) + "px";
+  });
+  textarea.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  // ── Sample query click ──
+  function useQuery(el) {
+    textarea.value = el.textContent;
+    textarea.dispatchEvent(new Event("input"));
+    textarea.focus();
+  }
+
+  // ── Send Message ──
+  async function sendMessage() {
+    const query = textarea.value.trim();
+    if (!query || isLoading) return;
+
+    // Hide welcome screen
+    const welcome = document.getElementById("welcome-screen");
+    if (welcome) welcome.remove();
+
+    // Add user message
+    appendMessage("user", query);
+    messages.push({ role: "user", content: query });
+    textarea.value = "";
+    textarea.style.height = "auto";
+
+    // Show typing indicator
+    const typingId = showTyping();
+    setLoading(true);
+
+    try {
+      let response;
+      if (DEMO_MODE) {
+        response = await simulateResponse(query);
+      } else {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query, temperature })
+        });
+        const data = await res.json();
+        response = data.response || data.error || "An error occurred.";
+      }
+
+      removeTyping(typingId);
+      appendMessage("assistant", response);
+      messages.push({ role: "assistant", content: response });
+    } catch (err) {
+      removeTyping(typingId);
+      appendMessage("assistant", "⚠ Could not connect to the server. Make sure the Flask backend is running on localhost:5000.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // ── Append Message ──
+  function appendMessage(role, text) {
+    const chatArea = document.getElementById("chat-area");
+    const msgEl = document.createElement("div");
+    msgEl.className = `message ${role === "user" ? "user-msg" : "assistant-msg"}`;
+
+    const avatar = role === "user" ? "👤" : "⚕";
+    const name = role === "user" ? "You" : "MediGuide";
+
+    msgEl.innerHTML = `
+      <div class="msg-avatar">${avatar}</div>
+      <div class="msg-body">
+        <div class="msg-name">${name}</div>
+        <div class="msg-bubble">${role === "user" ? escapeHtml(text) : formatResponse(text)}</div>
+      </div>
+    `;
+    chatArea.appendChild(msgEl);
+    chatArea.scrollTop = chatArea.scrollHeight;
+  }
+
+  // ── Format assistant response ──
+  function formatResponse(text) {
+    // Detect out-of-scope refusal
+    if (text.includes("Out of Scope")) {
+      const cleanText = text.replace(/^---\s*/gm, "").replace(/\s*---$/gm, "").trim();
+      return `<div class="out-of-scope">${escapeHtml(cleanText).replace(/\n/g, "<br>")}</div>`;
+    }
+
+    // Format structured response
+    let html = text
+      // Remove horizontal rules
+      .replace(/^---$/gm, "")
+      // Bold section headers like **📋 Overview**
+      .replace(/\*\*([^*]+)\*\*/g, (_, hdr) => {
+        if (hdr.startsWith("⚕️ Disclaimer") || hdr.startsWith("*This")) {
+          return `<span class="section-header">${hdr}</span>`;
+        }
+        return `<span class="section-header">${hdr}</span>`;
+      })
+      // Italic text for disclaimer content
+      .replace(/\*([^*]+)\*/g, (_, content) => {
+        if (content.startsWith("This information")) {
+          return `<em class="disclaimer-text">${escapeHtml(content)}</em>`;
+        }
+        return `<em>${escapeHtml(content)}</em>`;
+      })
+      // Bullet points
+      .replace(/^[●•\-] (.+)$/gm, "<li>$1</li>")
+      // Numbered lists
+      .replace(/^\d+\. (.+)$/gm, "<li>$1</li>")
+      // Line breaks
+      .replace(/\n/g, "<br>");
+
+    // Wrap <li> items in <ul>
+    html = html.replace(/(<li>.*?<\/li>)(<br>)*/gs, (match) => {
+      return `<ul>${match.replace(/<br>/g, "")}</ul>`;
+    });
+
+    // Wrap disclaimer section
+    html = html.replace(
+      /(<span class="section-header">⚕️ Disclaimer<\/span>)(.*)/s,
+      (_, header, content) => `<div class="disclaimer">${header}${content}</div>`
+    );
+
+    return html;
+  }
+
+  function escapeHtml(text) {
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  // ── Typing Indicator ──
+  function showTyping() {
+    const chatArea = document.getElementById("chat-area");
+    const id = "typing-" + Date.now();
+    const el = document.createElement("div");
+    el.className = "message assistant-msg";
+    el.id = id;
+    el.innerHTML = `
+      <div class="msg-avatar">⚕</div>
+      <div class="msg-body">
+        <div class="msg-name">MediGuide</div>
+        <div class="msg-bubble">
+          <div class="typing-indicator"><span></span><span></span><span></span></div>
+        </div>
+      </div>
+    `;
+    chatArea.appendChild(el);
+    chatArea.scrollTop = chatArea.scrollHeight;
+    return id;
+  }
+  function removeTyping(id) {
+    const el = document.getElementById(id);
+    if (el) el.remove();
+  }
+
+  // ── Loading State ──
+  function setLoading(val) {
+    isLoading = val;
+    document.getElementById("send-btn").disabled = val;
+    textarea.disabled = val;
+  }
+
+  // ── Reset ──
+  document.getElementById("reset-btn").addEventListener("click", () => {
+    if (!confirm("Clear the conversation?")) return;
+    messages = [];
+    const chatArea = document.getElementById("chat-area");
+    chatArea.innerHTML = `
+      <div class="welcome" id="welcome-screen">
+        <div class="welcome-icon">🩺</div>
+        <h2>Hello, I'm MediGuide</h2>
+        <p>Your evidence-based healthcare information assistant. Ask me about symptoms, conditions, medications, or general wellness guidance.</p>
+        <div class="sample-queries">
+          <div class="sample-q" onclick="useQuery(this)">Signs of type 2 diabetes</div>
+          <div class="sample-q" onclick="useQuery(this)">How does ibuprofen work?</div>
+          <div class="sample-q" onclick="useQuery(this)">Early signs of a heart attack</div>
+          <div class="sample-q" onclick="useQuery(this)">What is hypertension?</div>
+          <div class="sample-q" onclick="useQuery(this)">Improving sleep naturally</div>
+          <div class="sample-q" onclick="useQuery(this)">First aid for a burn</div>
+          <div class="sample-q" onclick="useQuery(this)">What does a CBC test measure?</div>
+          <div class="sample-q" onclick="useQuery(this)">Exercise and mental health</div>
+        </div>
+      </div>
+    `;
+  });
+
+  // ─────────────────────────────────────────────
+  // DEMO MODE: Simulated responses for testing
+  // without a live server
+  // ─────────────────────────────────────────────
+  async function simulateResponse(query) {
+    await new Promise(r => setTimeout(r, 1200 + Math.random() * 800));
+
+    const q = query.toLowerCase();
+    const isOutOfDomain = 
+      q.includes("recipe") || q.includes("cook") || q.includes("food") ||
+      q.includes("football") || q.includes("soccer") || q.includes("sports") ||
+      q.includes("movie") || q.includes("film") || q.includes("stock") ||
+      q.includes("weather") || q.includes("travel") || q.includes("game") ||
+      q.includes("fifa") || q.includes("world cup") || q.includes("pizza");
+
+    if (isOutOfDomain) {
+      return `---
+**⚕ Out of Scope**
+I'm MediGuide, a healthcare-only assistant. I'm unable to help with that topic.
+
+**What I Can Help With:**
+Please ask me about symptoms, conditions, medications, wellness, or general health guidance.
+---`;
+    }
+
+    if (q.includes("diabetes")) {
+      return `---
+**📋 Overview**
+Type 2 diabetes is a chronic metabolic condition where the body either doesn't produce enough insulin or doesn't use insulin effectively, resulting in elevated blood glucose levels. It accounts for approximately 90–95% of all diabetes cases.
+
+**🔍 Key Information**
+● Increased thirst (polydipsia) and frequent urination are hallmark early symptoms
+● Unexplained fatigue, blurred vision, and slow-healing wounds are common signs
+● Tingling or numbness in hands and feet (peripheral neuropathy) may develop
+● Many people have no symptoms initially — regular screening is important
+● Risk factors include obesity, physical inactivity, and family history
+
+**⚠️ Important Considerations**
+Uncontrolled type 2 diabetes can lead to serious complications including cardiovascular disease, kidney damage (nephropathy), and vision loss (retinopathy). Blood glucose management is critical to preventing long-term complications.
+
+**✅ Recommended Next Steps**
+If you're experiencing these symptoms, schedule a fasting blood glucose or HbA1c test with your doctor. Lifestyle changes — including weight management, a balanced diet, and regular exercise — are first-line interventions alongside any medical treatment.
+
+**⚕️ Disclaimer**
+*This information is for general educational purposes only and does not constitute medical advice. Always consult a qualified healthcare professional for personal medical concerns, diagnosis, or treatment decisions.*
+---`;
+    }
+
+    if (q.includes("ibuprofen")) {
+      return `---
+**📋 Overview**
+Ibuprofen is a nonsteroidal anti-inflammatory drug (NSAID) that works by inhibiting cyclooxygenase (COX-1 and COX-2) enzymes, which are responsible for producing prostaglandins — chemical messengers that promote pain, inflammation, and fever.
+
+**🔍 Key Information**
+● Blocks prostaglandin synthesis to reduce pain signals, swelling, and fever
+● Available OTC for mild-to-moderate pain including headaches, muscle aches, and menstrual cramps
+● Onset of action is typically 20–30 minutes with effects lasting 4–6 hours
+● Belongs to the propionic acid class of NSAIDs
+● Also sold under brand names Advil and Motrin
+
+**⚠️ Important Considerations**
+Ibuprofen can irritate the gastrointestinal tract and should be taken with food. It carries risks for people with kidney disease, cardiovascular disease, or peptic ulcers. Long-term or high-dose use should be medically supervised. It can interact with blood thinners such as warfarin.
+
+**✅ Recommended Next Steps**
+Follow dosing directions on the label. If pain persists beyond 10 days, or you have underlying health conditions, consult a pharmacist or physician before continued use.
+
+**⚕️ Disclaimer**
+*This information is for general educational purposes only and does not constitute medical advice. Always consult a qualified healthcare professional for personal medical concerns, diagnosis, or treatment decisions.*
+---`;
+    }
+
+    if (q.includes("heart attack") || q.includes("cardiac")) {
+      return `---
+**📋 Overview**
+A heart attack (myocardial infarction) occurs when blood flow to a section of the heart is blocked, usually by a blood clot in a coronary artery. Recognizing early warning signs can be life-saving, as prompt treatment dramatically improves outcomes.
+
+**🔍 Key Information**
+● Chest pain, pressure, squeezing, or tightness — often the most prominent symptom
+● Pain or discomfort radiating to the arm, shoulder, neck, jaw, or back
+● Shortness of breath, which may occur with or without chest discomfort
+● Nausea, cold sweat, and lightheadedness are common accompanying symptoms
+● Women may experience atypical symptoms like fatigue, jaw pain, or nausea more prominently
+
+**⚠️ Important Considerations**
+Symptoms can be gradual or sudden and may come and go. Some heart attacks occur without classic symptoms ("silent MI"), particularly in people with diabetes. Every minute of delayed treatment increases cardiac damage.
+
+**✅ Recommended Next Steps**
+**Call emergency services (911 / 112) immediately** if you suspect a heart attack. Do not drive yourself. Chewing an aspirin (if not allergic) may help while awaiting emergency services. Time-to-treatment is critical.
+
+**⚕️ Disclaimer**
+*This information is for general educational purposes only and does not constitute medical advice. Always consult a qualified healthcare professional for personal medical concerns, diagnosis, or treatment decisions.*
+---`;
+    }
+
+    // Default structured response
+    return `---
+**📋 Overview**
+This is a healthcare topic I can help provide general information about. Based on established medical knowledge, here is a structured overview of your question.
+
+**🔍 Key Information**
+● Healthcare information should always be interpreted in the context of your personal health history
+● General guidelines vary by individual factors such as age, weight, and existing conditions
+● Preventive care and early intervention are consistently effective across most health topics
+● Evidence-based guidelines are regularly updated by bodies such as the WHO and CDC
+● Regular check-ups enable early detection of many common conditions
+
+**⚠️ Important Considerations**
+Individual health circumstances vary significantly. What applies generally may not apply to specific cases. Factors like medications, allergies, and comorbidities must always be considered by a qualified professional.
+
+**✅ Recommended Next Steps**
+Consult a licensed healthcare provider for personalized evaluation. In the meantime, maintaining a healthy lifestyle — balanced diet, regular exercise, and adequate sleep — supports overall wellness across virtually all health conditions.
+
+**⚕️ Disclaimer**
+*This information is for general educational purposes only and does not constitute medical advice. Always consult a qualified healthcare professional for personal medical concerns, diagnosis, or treatment decisions.*
+---`;
+  }
+</script>
+</body>
+</html>
