@@ -11,7 +11,7 @@ import os
 # ─────────────────────────────────────────────
 # CONFIGURATION
 # ─────────────────────────────────────────────
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "YOUR_OPENROUTER_API_KEY_HERE")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "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")
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 MODEL = "openai/gpt-3.5-turbo"  # or "anthropic/claude-3-haiku"
 
